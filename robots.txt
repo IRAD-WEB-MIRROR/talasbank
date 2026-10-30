@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /search.html
+Sitemap: https://talasbank.net/sitemap.xml
