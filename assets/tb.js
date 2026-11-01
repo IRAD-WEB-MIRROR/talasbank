@@ -76,7 +76,7 @@
   if (la) { la.oninput = calc; lt.oninput = calc; $$(".tabs button").forEach(function (b) { b.onclick = function () { setLoan(b.getAttribute("data-loan")); }; }); setLoan("foal"); }
 
   /* rates: the Bank of Irad official rate from the daily numbers */
-  var FALLBACK = window.TB_RATES || null;
+  var FALLBACK = window.TB_RATES || null, onRates = null, RATES = null;
   var NAMES = { en: { USD: "US dollar", EUR: "Euro", CNY: "Chinese yuan", RUB: "Russian rouble", KZT: "Kazakh tenge", KGS: "Kyrgyz som", UZS: "Uzbek sum" },
     ru: { USD: "Доллар США", EUR: "Евро", CNY: "Китайский юань", RUB: "Российский рубль", KZT: "Казахский тенге", KGS: "Кыргызский сом", UZS: "Узбекский сум" },
     ir: { USD: "AKSh dolları", EUR: "Evro", CNY: "Kıtay yuanı", RUB: "Orus rubl", KZT: "Kazak teñgesi", KGS: "Kırgız somu", UZS: "Özbek sumu" } };
@@ -94,6 +94,7 @@
       el.innerHTML = h;
     });
     convInit(rows);
+    if (onRates) onRates();
   }
   if ($("[data-rates]")) {
     if (FALLBACK) drawRates(FALLBACK.rates, FALLBACK.date);
@@ -104,7 +105,7 @@
   }
 
   /* online converter, at the official rate */
-  var RATES = null, mode = "sell";
+  var mode = "sell";
   function conv() {
     if (!RATES || !$("#cvA")) return;
     var r = {}; RATES.forEach(function (x) { r[x.code] = x.som / x.units; }); r.SOM = 1;
@@ -195,4 +196,109 @@
   }
   var t3 = irt(), nx = new Date(t3.getFullYear(), t3.getMonth() + (t3.getDate() > 10 ? 1 : 0), 10);
   $$(".qnext").forEach(function (qd) { qd.textContent = t3.getDate() === 10 ? (T[L].qToday || "today") : fmtDate(nx); });
+
+  /* currency exchange: the official rate, a number for the exchange cash desk, and the Irad clock (lunch, cash collection, closing) */
+  var fx = $("#fxform");
+  if (fx) {
+    var OFFS = JSON.parse(fx.getAttribute("data-offices")), op = "sell", DK = ["su", "mo", "tu", "we", "th", "fr", "sa"], DN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    var STEP = { USD: 1, RUB: 50, KZT: 100 }, CUR = { USD: "US dollars", RUB: "roubles", KZT: "tenge" };
+    function office() { var id = $("#fxo").value; for (var i = 0; i < OFFS.length; i++) if (OFFS[i].id === id) return OFFS[i]; return OFFS[0]; }
+    function hm(t) { var p = t.split(":"); return +p[0] * 60 + +p[1]; }
+    function clk(m) { return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
+    function iso(d) { return ymd(d); }
+    function hol(d) { try { return window.IradClock && window.IradClock.holiday(iso(d)); } catch (e) { return null; } }
+    /* the cash desk on a given day: [open, close, breaks] in minutes, or null when closed */
+    function desk(o, d) {
+      var h = o.h[DK[d.getDay()]], avia = o.id === "fx-avia", branch = o.id.indexOf("fx-") !== 0;
+      if (!h || h === "closed") return null;
+      if (branch && hol(d)) return null;
+      var p = h.split("-"), a = hm(p[0]), b = hm(p[1]) - (avia ? 0 : 30), wk = d.getDay() > 0 && d.getDay() < 6, br = [];
+      if (!avia && wk) { if (a < 11 * 60 && b > 11 * 60 + 15) br.push([660, 675, "col"]); if (a < 13 * 60 && b > 14 * 60) br.push([780, 840, "lunch"]); }
+      return [a, b, br];
+    }
+    function nextOpen(o, t) {
+      var d = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+      for (var i = 1; i < 10; i++) { d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); var k = desk(o, d); if (k) return [d, k[0]]; }
+      return null;
+    }
+    function hoursLine(o) {
+      var runs = [];
+      [1, 2, 3, 4, 5, 6, 0].forEach(function (i) { var v = o.h[DK[i]] || "closed"; if (runs.length && runs[runs.length - 1][2] === v) runs[runs.length - 1][1] = i; else runs.push([i, i, v]); });
+      return runs.map(function (r) { return (r[0] === r[1] ? DN[r[0]] : DN[r[0]] + "–" + DN[r[1]]) + " " + (r[2] === "closed" ? "closed" : r[2].replace("-", "–")); }).join(", ");
+    }
+    function rate(c) { if (!RATES) return null; for (var i = 0; i < RATES.length; i++) if (RATES[i].code === c) return RATES[i].som / RATES[i].units; return null; }
+    function som(v) { v = Math.floor(v * 10 + 1e-6) / 10; return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " som"; }
+    function bought() { var t = irt(), k = "tb_fx_" + t.getFullYear() + pad(t.getMonth() + 1); return +(store(k) || 0); }
+    function quote() {
+      var c = op === "buy" ? "USD" : $("#fxc").value, a = Math.floor((parseFloat($("#fxa").value) || 0) / STEP[c]) * STEP[c], r = rate(c), out = $("#fxcalc");
+      if (!r || a <= 0) { out.innerHTML = ""; return null; }
+      var q = { c: c, a: a, r: r, s: a * r };
+      out.innerHTML = (op === "sell" ? "You give <b>" + a.toLocaleString("en-US") + " " + c + "</b>, you receive <b>" + som(q.s) + "</b>"
+        : "You pay <b>" + som(q.s) + "</b>, you receive <b>" + a.toLocaleString("en-US") + " USD</b>") +
+        "<br><small>Rate: 1 " + c + " = " + r.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " som (official rate of the Bank of Irad" + (c === "USD" ? ", fixed by the Bank of Irad Act 2008" : "") + ")" +
+        (a !== (parseFloat($("#fxa").value) || 0) ? ". Amount rounded to whole banknotes: " + STEP[c] + " " + c : "") + "</small>";
+      return q;
+    }
+    function showHours() { var o = office(); $("#fxh").textContent = (o.id === "fx-avia" ? "Exchange office: " + hoursLine(o) + ", no breaks" : "Office hours: " + hoursLine(o) + ". The exchange cash desk takes operations until 30 minutes before closing."); }
+    $("#fxo").onchange = function () { showHours(); $("#fxout").innerHTML = ""; };
+    $("#fxa").oninput = quote; $("#fxc").onchange = quote;
+    $$(".fxseg button").forEach(function (b) {
+      b.onclick = function () {
+        op = b.getAttribute("data-op"); $$(".fxseg button").forEach(function (x) { x.className = x === b ? "on" : ""; });
+        $("#fxc").value = "USD"; $("#fxc").disabled = op === "buy"; if (op === "buy" && +$("#fxa").value > 300) $("#fxa").value = 300; quote(); $("#fxout").innerHTML = "";
+      };
+    });
+    var LUNCH = "<div class='fxsign'><div class='t'>ОБЕД</div><div>TÜSHKÜ TAMAK · LUNCH</div><div class='h'>13:00 – 14:00</div></div>";
+    function when(d, m) { var t = irt(), td = new Date(t.getFullYear(), t.getMonth(), t.getDate()), dd = Math.round((d - td) / 864e5);
+      return (dd === 0 ? "today" : dd === 1 ? "tomorrow" : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getDay()] + " " + fmtDate(d)) + " at " + clk(m); }
+    function E(x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+    fx.onsubmit = function (e) {
+      e.preventDefault();
+      var q = quote(), o = office(), t = irt(), mins = t.getHours() * 60 + t.getMinutes(), out = $("#fxout"), now = "It is now " + clk(mins) + " in Talas.";
+      if (!q) { out.innerHTML = "<div class='notice red'>Enter the amount.</div>"; return; }
+      var k = desk(o, t), h = hol(t), nx;
+      /* closed for the day */
+      if (!k || mins >= k[1] || mins < k[0]) {
+        nx = !k || mins >= k[1] ? nextOpen(o, t) : [t, k[0]];
+        out.innerHTML = "<div class='notice red'><b class='h'>The exchange cash desk is closed</b>" + (h && !k && o.h[DK[t.getDay()]] !== "closed" ? "Today is a public holiday (" + h.name[0] + "). " : "") +
+          now + " Numbers are given only while the cash desk is open. It opens " + (nx ? when(nx[0], nx[1]) : "on the next working day") + ".</div>";
+        return;
+      }
+      /* on a break: lunch, or cash collection */
+      for (var i = 0; i < k[2].length; i++) {
+        var b = k[2][i];
+        if (mins >= b[0] && mins < b[1]) {
+          out.innerHTML = (b[2] === "lunch" ? LUNCH + "<div class='notice'><b class='h'>Come back after lunch</b>" + now + " The cashier is at lunch. The cash desk opens again at 14:00, in " + (840 - mins) + " min. Numbers are given after lunch.</div>"
+            : "<div class='notice'><b class='h'>Technical break: cash collection</b>" + now + " The cash desk is closed while the cash is collected. Please wait until " + clk(b[1]) + ".</div>");
+          return;
+        }
+      }
+      if (op === "buy") {
+        var left = 300 - bought(), mo = t.getMonth(), day = ymd(t);
+        if (q.a > left) { out.innerHTML = "<div class='notice red'><b class='h'>Over the monthly limit</b>Sale of cash US dollars is limited to US$300 per customer per month (Bank of Irad notice 2026/2). " +
+          (left > 0 ? "You can buy up to US$" + left + " more this month." : "Your limit for " + fmtDate(t).replace(/^\d+ /, "") + " is used.") + "</div>"; return; }
+        var p = t.getDate() === 10 ? 0 : o.id === "fx-avia" ? 0.5 : o.id === "biz-talas-0178" ? 0.45 : 0.22;
+        if (mins > 12 * 60) p *= 0.5;
+        if (rnd(o.id + day + "usd") >= p) { out.innerHTML = "<div class='notice red'><b class='h'>No cash US dollars in this office today</b>" + now +
+          " The office has no US dollar banknotes for sale today. Deliveries from our correspondent banks are irregular; please ask in the morning or choose another office. Selling currency for som is not affected.</div>"; return; }
+      }
+      /* a number for the exchange cash desk */
+      var key = ymd(t) + o.id + op, d = t.getDate(), wd = t.getDay(), stored = store("tb_fx_q_" + key);
+      var crowd = d === 10 ? 40 : d === 9 || d === 11 ? 14 : wd === 6 ? 11 : o.id === "fx-bazar" ? 9 : 5;
+      var served = Math.max(Math.floor((mins - k[0]) * 0.18), 0), ahead0 = crowd + Math.floor(rnd(key + Math.floor(mins / 20)) * crowd);
+      var no = stored ? +stored : served + ahead0 + 1, ahead = Math.max(no - served - 1, 0);
+      if (!stored) { store("tb_fx_q_" + key, no); if (op === "buy") store("tb_fx_" + t.getFullYear() + pad(t.getMonth() + 1), bought() + q.a); }
+      var wait = Math.round(ahead * 4.5), at = mins + wait, lunchNote = "";
+      k[2].forEach(function (b) { if (mins < b[0] && at >= b[0]) { at += b[1] - b[0]; if (b[2] === "lunch") lunchNote = "<div class='notice'><b class='h'>Lunch break</b>The cash desk closes for lunch from 13:00 to 14:00. If your number has not been called by 13:00, it will be called after lunch.</div>"; } });
+      var late = at > k[1];
+      out.innerHTML = "<div class='ticket'>TALASBANK<br>EXCHANGE OFFICE<br>" + E(o.n) + "<hr><div>" + (T[L].qYour || "Your number") + "</div><div class='no'>V-" + ("000" + no).slice(-3) + "</div>" +
+        (op === "sell" ? q.a.toLocaleString("en-US") + " " + q.c + " → " + som(q.s) : som(q.s) + " → " + q.a + " USD") + "<br>1 " + q.c + " = " + q.r.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " som<hr>" +
+        (T[L].qAhead || "Customers ahead of you") + ": <b>" + ahead + "</b><br>" + (T[L].qWait || "Estimated waiting time") + ": <b>" + (at - mins >= 60 ? Math.floor((at - mins) / 60) + " h " : "") + ((at - mins) % 60) + " min</b><br>" +
+        "Expected call: about <b>" + clk(Math.min(at, 1439)) + "</b><hr>" + fmtDate(t) + " " + clk(mins) + "</div>" + lunchNote +
+        (late ? "<div class='notice red'>The cash desk may close before your number is called (it takes operations until " + clk(k[1]) + "). Please come early tomorrow or choose another office.</div>" : "") +
+        "<p style='font-size:11px'>The number is valid today only, at the exchange cash desk of the office named on it. Bring the banknotes and your passport" + (op === "buy" ? "; the purchase is recorded against your monthly limit" : "") +
+        ". The rate is that of the day of the operation.</p>";
+    };
+    onRates = quote; showHours(); quote();
+  }
 })();

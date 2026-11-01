@@ -289,3 +289,19 @@ html.vi #hero .ph, html.vi .stack, html.vi .globe { display: none; }
 .duo .cgi { width: 340px; max-width: 100%; height: 340px; object-fit: cover; border-radius: 18px; }
 .duo .cgi.w { width: 420px; max-width: 100%; height: 296px; }
 html.vi .pic, html.vi .duo .cgi { display: none; }
+
+/* currency exchange */
+.fxrates { max-width: 560px; }
+.fxh { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.fxrow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.qform input[type=number] { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--deep); color: var(--text); font: 15px var(--font); }
+.qform select:disabled { opacity: .55; }
+.fxseg { flex-wrap: wrap; }
+.fxseg button { padding: 9px 18px; border-color: var(--line); }
+.fxseg button.on { border-color: var(--text); background: rgba(207, 224, 247, .12); }
+.fxcalc { font-size: 16px; line-height: 1.5; min-height: 24px; }
+.fxcalc small { color: var(--muted); font-size: 12px; }
+.fxsign { width: 230px; margin: 18px 0 0; background: #f4f1e6; color: #a01818; border: 3px double #a01818; text-align: center; padding: 12px 10px; font: bold 12px Arial, sans-serif; transform: rotate(-2deg); box-shadow: 0 8px 18px rgba(0, 0, 0, .35); }
+.fxsign .t { font-size: 34px; letter-spacing: 4px; }
+.fxsign .h { font-size: 20px; margin-top: 4px; color: #222; }
+@media (max-width: 640px) { .fxrow { grid-template-columns: 1fr; } }
