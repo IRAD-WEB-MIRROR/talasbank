@@ -305,3 +305,14 @@ html.vi .pic, html.vi .duo .cgi { display: none; }
 .fxsign .t { font-size: 34px; letter-spacing: 4px; }
 .fxsign .h { font-size: 20px; margin-top: 4px; color: #222; }
 @media (max-width: 640px) { .fxrow { grid-template-columns: 1fr; } }
+
+/* card application online */
+.mvtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 14px; }
+.mvtabs a { border: 1px solid var(--line); color: var(--text); border-radius: 22px; padding: 8px 20px; font: 500 14px var(--font); text-decoration: none; }
+.mvtabs a.on { border-color: var(--text); background: rgba(207, 224, 247, .12); }
+.qform input[type=text] { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--deep); color: var(--text); font: 15px var(--font); }
+.mvchk label { font-weight: 400 !important; font-size: 14px !important; color: var(--text) !important; margin-bottom: 8px !important; }
+.mvsmall { font-size: 12px; color: var(--muted); margin: 0; }
+.mvbox { background: var(--panel); border-radius: 12px; padding: 4px 18px; margin: 16px 0 6px; max-width: 736px; }
+.mvbox p { line-height: 1.7; }
+#mvapp table.list td.num { white-space: nowrap; }
