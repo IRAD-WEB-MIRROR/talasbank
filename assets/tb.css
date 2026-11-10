@@ -316,3 +316,16 @@ html.vi .pic, html.vi .duo .cgi { display: none; }
 .mvbox { background: var(--panel); border-radius: 12px; padding: 4px 18px; margin: 16px 0 6px; max-width: 736px; }
 .mvbox p { line-height: 1.7; }
 #mvapp table.list td.num { white-space: nowrap; }
+
+/* e-Irad temporary slip (private.html#slip) */
+.slipbox { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 10px 0 22px; }
+.slipbox .isl-form label { color: var(--pale); }
+.slipbox .isl-form input { background: #fff; color: #10233f; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font: 15px var(--font); }
+.slipbox .btn { padding: 10px 26px; }
+.slipbox .isl-t { width: 100%; font-size: 14px; }
+.slipbox .isl-t th, .slipbox .isl-t td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; }
+.slipbox .isl-t th { color: var(--muted); width: 38%; }
+.slipbox .isl-ops th { width: auto; color: var(--muted); }
+.slipbox .isl-err, .slipbox .isl-bad { color: #ff8a80; }
+.slipbox .isl-warn { border-left-color: var(--gold); }
+.slipbox a { color: var(--gold2); }
