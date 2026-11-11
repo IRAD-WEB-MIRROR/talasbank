@@ -1,0 +1,14 @@
+# Talasbank (Bank of Talas) - security contact for talasbank.net and Talasbank Online.
+#
+# Found a weakness in our website or internet banking? Tell us here, and only here.
+# Do not test it on other customers' accounts or money. Do not post it on forums first.
+# Reports sent to branches, the call centre or our Tulpar channel do not reach this team.
+#
+# The Information Security Department reads this mailbox on working days.
+# We do not pay rewards. We will write and thank you if you ask.
+# We already know that the old internet banking login page is old. It is being replaced.
+# Please stop sending us automated scanner reports with no explanation.
+Contact: mailto:security@talasbank.net
+Expires: 2027-06-30T18:00:00.000Z
+Preferred-Languages: ru, en
+Canonical: https://talasbank.net/.well-known/security.txt
