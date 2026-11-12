@@ -8,6 +8,8 @@
 # We do not pay rewards. We will write and thank you if you ask.
 # We already know that the old internet banking login page is old. It is being replaced.
 # Please stop sending us automated scanner reports with no explanation.
+# Paper letters reach us too (Information Security Department, head office). Someone sent one
+# with a stamp and no letter inside. Control No. YRT-GDG6. If it was you, write again.
 Contact: mailto:security@talasbank.net
 Expires: 2027-06-30T18:00:00.000Z
 Preferred-Languages: ru, en
